@@ -1,32 +1,32 @@
 typedef enum term_type {
-	VAR, ABS, APP
+    VAR, ABS, APP
 } TermType;
 
 struct term;
 struct env;
 
 typedef struct var {
-	char *name;
+    char *name;
 } Var;
 
 typedef struct abs {
-	char *arg;
-	struct term *body;
+    char *arg;
+    struct term *body;
 } Abs;
 
 typedef struct app {
-	struct term *t1, *t2;
+    struct term *t1, *t2;
 } App;
 
 typedef union term_choice {
-	Var var;
-	Abs abs;
-	App app;
+    Var var;
+    Abs abs;
+    App app;
 } TermChoice;
 
 typedef struct term {
-	TermType type;
-	TermChoice tc;
+    TermType type;
+    TermChoice tc;
 } Term;
 
 typedef struct env {
