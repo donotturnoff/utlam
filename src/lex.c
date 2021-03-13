@@ -38,30 +38,6 @@ void consume_whitespace(Lexer *l) {
     }
 }
 
-Token *consume_include(Lexer *l) {
-    char *src = ++l->src;
-    if (src[0] != '"') {
-        l->error = "Expected string literal after #";
-        return NULL;
-    }
-    src++;
-    size_t i = 0;
-    do {
-        if (src[i] == '\0' || src[i] == '\r' || src[i] == '\n') {
-            l->error = "Unterminated string literal in include";
-            return NULL;
-        }
-        i++;
-    } while (src[i] != '"');
-
-    char *str = malloc_or_die((i + 1) * sizeof(char));
-    memcpy(str, src, i);
-    str[i] = '\0';
-
-    l->src += i+1; // +1 to skip over initial "
-    return token(INCLUDE_TOK, str);
-}
-
 Token *consume_id(Lexer *l) {
     char *src = l->src;
     size_t i = 0;
@@ -71,8 +47,10 @@ Token *consume_id(Lexer *l) {
     }
 
     Token *t;
-    if (i == 3 && src[0] == 'l' && src[1] == 'e' && src[2] == 't') {
-        t = token(LET_TOK, NULL); // If string is "let", produce LET_TOK
+    if (i == 2 && src[0] == 'i' && src[1] == 'n') { // in
+        t = token(IN_TOK, NULL);
+    } else if (i == 3 && src[0] == 'l' && src[1] == 'e' && src[2] == 't') { // let
+        t = token(LET_TOK, NULL);
     } else {
         char *str = malloc_or_die((i + 1) * sizeof(char));
         memcpy(str, src, i);
@@ -88,75 +66,37 @@ Token *next_token(Lexer *l) {
     consume_whitespace(l);
     char c = l->src[0];
     Token *t;
-    switch (c) {
-        case '\0':
-            t = token(EOF_TOK, NULL);
-            break;
-        case '\\':
-            t = token(LAMBDA_TOK, NULL);
-            break;
-        case '.':
-            t = token(POINT_TOK, NULL);
-            break;
-        case '=':
-            t = token(EQUALS_TOK, NULL);
-            break;
-        case ';':
-            t = token(SEMICOLON_TOK, NULL);
-            break;
-        case '(':
-            t = token(LPAREN_TOK, NULL);
-            break;
-        case ')':
-            t = token(RPAREN_TOK, NULL);
-            break;
-        case '#':
-            t = consume_include(l);
-            break;
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-        case 'e':
-        case 'f':
-        case 'g':
-        case 'h':
-        case 'i':
-        case 'j':
-        case 'k':
-        case 'l':
-        case 'm':
-        case 'n':
-        case 'o':
-        case 'p':
-        case 'q':
-        case 'r':
-        case 's':
-        case 't':
-        case 'u':
-        case 'v':
-        case 'w':
-        case 'x':
-        case 'y':
-        case 'z':
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            t = consume_id(l);
-            break;
-        default:
-            l->error = "Illegal character";
+    if (c == '.') {
+        t = token(POINT_TOK, NULL);
+    } else if (c == '\\') {
+        t = token(LAMBDA_TOK, NULL);
+    } else if (c == '=') {
+        t = token(EQUALS_TOK, NULL);
+    } else if (c == ';') {
+        t = token(SEMICOLON_TOK, NULL);
+    } else if (c == '(') {
+        t = token(LPAREN_TOK, NULL);
+    } else if (c == ')') {
+        t = token(RPAREN_TOK, NULL);
+    } else if (c == ':') {
+        if ((++(l->src))[0] == ':') {
+            t = token(NAMESPACE_TOK, NULL);
+        } else {
+            l->error = "Expected two colons for namespace operator";
             t = NULL;
+        }
+    } else if (c == '\0') {
+        t = token(EOF_TOK, NULL);
+    } else if (is_id_char(c)) {
+        t = consume_id(l);
+    } else {
+        l->error = "Illegal character";
+        t = NULL;
     }
+
     if (t) {
         l->src++;
     }
+
     return t;
 }

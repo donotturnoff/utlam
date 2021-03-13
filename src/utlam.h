@@ -45,7 +45,7 @@ typedef struct lexer {
 typedef enum token_type {
     EOF_TOK, LAMBDA_TOK, POINT_TOK, EQUALS_TOK,
     SEMICOLON_TOK, LPAREN_TOK, RPAREN_TOK,
-    LET_TOK, INCLUDE_TOK, ID_TOK
+    NAMESPACE_TOK, LET_TOK, IN_TOK, ID_TOK
 } TokenType;
 
 typedef struct token {

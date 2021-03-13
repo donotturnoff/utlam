@@ -29,8 +29,11 @@ void print_token(Token *t) {
         case LET_TOK:
             printf("LET\n");
             break;
-        case INCLUDE_TOK:
-            printf("INCLUDE(%s)\n", t->value);
+        case IN_TOK:
+            printf("IN\n");
+            break;
+        case NAMESPACE_TOK:
+            printf("NAMESPACE\n");
             break;
         case ID_TOK:
             printf("ID(%s)\n", t->value);
@@ -39,7 +42,7 @@ void print_token(Token *t) {
 }
 
 int main(void) {
-    char *src = "#\"test.c\"let f = \\x.(x x)(x;\\#\"Test\");";
+    char *src = "let f = \\x.(x x) in Utils::g (\\y . (f y))";
     Lexer *l = lexer(src);
     Token *t;
     while ((t = next_token(l)) && t->type != EOF_TOK) {
