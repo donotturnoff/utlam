@@ -28,11 +28,17 @@ Term *env_get(char *name, Env *env) {
 
 Term *eval_app(Term *t1, Term *t2, Env *env) {
     Term *v1 = eval(t1, env);
+    if (!v1) {
+        return NULL;
+    }
     if (v1->type != ABS) {
         fprintf(stderr, "Can only apply abstractions\n");
         return NULL;
     }
     Term *v2 = eval(t2, env);
+    if (!v2) {
+        return NULL;
+    }
     env = env_push(v1->tc.abs.arg, v2, env);
     Term *result = eval(v1->tc.abs.body, env);
     env = env_pop(env);
