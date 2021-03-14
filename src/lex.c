@@ -6,7 +6,6 @@
 Lexer *lexer(char *src) {
     Lexer *l = malloc_or_die(sizeof(Lexer));
     l->src = src;
-    l->error = NULL;
     return l;
 }
 
@@ -33,7 +32,7 @@ void free_token(Token *t) {
 }
 
 void consume_whitespace(Lexer *l) {
-    while (is_whitespace(l->src[0])) {
+    while (l->src[0] != '\0' && is_whitespace(l->src[0])) {
         l->src++;
     }
 }
@@ -47,10 +46,12 @@ Token *consume_id(Lexer *l) {
     }
 
     Token *t;
-    if (i == 2 && src[0] == 'i' && src[1] == 'n') { // in
+    if (i == 2 && strncmp(src, "in", 2) == 0) {
         t = token(IN_TOK, NULL);
-    } else if (i == 3 && src[0] == 'l' && src[1] == 'e' && src[2] == 't') { // let
+    } else if (i == 3 && strncmp(src, "let", 3) == 0) {
         t = token(LET_TOK, NULL);
+    } else if (i == 6 && strncmp(src, "export", 6) == 0) {
+        t = token(EXPORT_TOK, NULL);
     } else {
         char *str = malloc_or_die((i + 1) * sizeof(char));
         memcpy(str, src, i);
@@ -82,7 +83,6 @@ Token *next_token(Lexer *l) {
         if ((++(l->src))[0] == ':') {
             t = token(NAMESPACE_TOK, NULL);
         } else {
-            l->error = "Expected two colons for namespace operator";
             t = NULL;
         }
     } else if (c == '\0') {
@@ -90,7 +90,6 @@ Token *next_token(Lexer *l) {
     } else if (is_id_char(c)) {
         t = consume_id(l);
     } else {
-        l->error = "Illegal character";
         t = NULL;
     }
 
@@ -99,4 +98,20 @@ Token *next_token(Lexer *l) {
     }
 
     return t;
+}
+
+char *token_strings[11] = {"EOF", "\\", ".", "=", ";", "(", ")", "::", "export", "let", "in"};
+
+char *token_to_string(Token *t) {
+    if (!t) {
+        return NULL;
+    }
+    TokenType type = t->type;
+    if (type == ID_TOK) {
+        return smprintf(t->value);
+    } else if (EOF_TOK <= type && type <= IN_TOK) {
+        return smprintf(token_strings[type]);
+    } else {
+        return NULL;
+    }
 }

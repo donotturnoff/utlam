@@ -38,11 +38,14 @@ void print_token(Token *t) {
         case ID_TOK:
             printf("ID(%s)\n", t->value);
             break;
+        case EXPORT_TOK:
+            printf("EXPORT\n");
+            break;
     }
 }
 
 int main(void) {
-    char *src = "let f = \\x.(x x) in Utils::g (\\y . (f y))";
+    char *src = "y";
     Lexer *l = lexer(src);
     Token *t;
     while ((t = next_token(l)) && t->type != EOF_TOK) {
