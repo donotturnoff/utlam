@@ -58,18 +58,14 @@ char *term_to_string(Term *t) {
     if (type == VAR) {
         return smprintf(tc.var.name);
     } else if (type == ABS) {
-        assert(tc.abs.body != NULL);
-        assert(tc.abs.arg != NULL);
         char *body_str = term_to_string(tc.abs.body);
-        char *str = smprintf("(\\%s.%s)", tc.abs.arg, body_str);
+        char *str = smprintf("\\%s.%s", tc.abs.arg, body_str);
         free(body_str);
         return str;
     } else if (type == APP) {
         char *t1_str = term_to_string(tc.app.t1);
         char *t2_str = term_to_string(tc.app.t2);
-        assert(tc.app.t1 != NULL);
-        assert(tc.app.t2 != NULL);
-        char *str = smprintf("%s %s", t1_str, t2_str);
+        char *str = smprintf("(%s) (%s)", t1_str, t2_str);
         free(t1_str);
         free(t2_str);
         return str;

@@ -28,8 +28,6 @@ int main(int argc, char *argv[]) {
         char *result_str = term_to_string(result);
         printf("%s\n", result_str);
         free(result_str);
-    } else {
-        printf("\n");
     }
 
     free_term(t);
