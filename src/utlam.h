@@ -5,7 +5,7 @@
 #include <assert.h>
 
 typedef enum error_type {
-	LEX_ERR, PARSE_ERR, EVAL_ERR
+	LEX_ERR, PARSE_ERR, EVAL_ERR, FILE_ERR
 } ErrorType;
 
 typedef enum term_type {

@@ -85,7 +85,9 @@ Token *next_token(char **src) {
     }
 
     if (t) {
-        (*src)++;
+        if (c != '\0') {
+            (*src)++;
+        }
     } else {
         error(LEX_ERR, "unexpected character %c", c);
     }

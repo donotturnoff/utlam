@@ -32,7 +32,7 @@ char *smprintf(char *fmt, ...) {
     return ret;
 }
 
-char *error_type_strings[3] = {"Lex", "Parse", "Evaluation"};
+char *error_type_strings[4] = {"Lex", "Parse", "Evaluation", "File"};
 
 void error(ErrorType type, const char *format, ...) {
     va_list(args);
