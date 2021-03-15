@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     long fsize = ftell(f);
     fseek(f, 0, SEEK_SET);  /* same as rewind(f); */
 
-    char *src = malloc(fsize + 1);
+    char *src = malloc((fsize + 1) * sizeof(char));
     fread(src, 1, fsize, f);
     fclose(f);
 
@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     fflush(stdout);
     free(t_str);
 
-    Term *result = eval(t, NULL);
+    Term *result = eval(t);
     char *result_str = term_to_string(result);
     printf("%s\n", result_str);
     free(result_str);

@@ -1,18 +1,51 @@
 #include "utlam.h"
 #include <stdlib.h>
+#include <string.h>
+
+typedef struct env {
+    char *name;
+    Abs *abs;
+    struct env *next;
+} Env;
 
 typedef struct parser {
     char *src;
     Token *token;
+    Env *env;
 } Parser;
 
 void parse_export(Parser *p);
 Term *parse_term(Parser *p);
 
+Env *env_push(char *name, Abs *abs, Env *env) {
+    Env *new_head = malloc_or_die(sizeof(Env));
+    new_head->name = name;
+    new_head->abs = abs;
+    new_head->next = env;
+    return new_head;
+}
+
+Env *env_pop(Env *env) {
+    Env *next = env->next;
+    free(env);
+    return next;
+}
+
+Abs *env_get(char *name, Env *env) {
+    while (env) {
+        if (strcmp(name, env->name) == 0) {
+            return env->abs;
+        }
+        env = env->next;
+    }
+    return NULL;
+}
+
 Parser *parser(char *src) {
     Parser *p = malloc_or_die(sizeof(Parser));
     p->src = src;
     p->token = NULL;
+    p->env = NULL;
     return p;
 }
 
@@ -55,7 +88,8 @@ Term *parse_atom(Parser *p) {
         eat(p, RPAREN_TOK);
     } else {
         eat(p, ID_TOK);
-        t = var(name);
+        Abs *binder = env_get(name, p->env);
+        t = var(name, binder);
     }
     return t;
 }
@@ -75,16 +109,27 @@ Term *parse_term(Parser *p) {
         char *arg = smprintf(p->token->value);
         eat(p, ID_TOK);
         eat(p, POINT_TOK);
-        Term *t = parse_term(p);
-        return abst(arg, t);
+        Term *abs = abst(arg, NULL);
+        p->env = env_push(arg, &(abs->tc.abs), p->env);
+        assert(p->env != NULL);
+        Term *body = parse_term(p);
+        p->env = env_pop(p->env);
+        abs->tc.abs.body = body;
+        return abs;
     } else if (accept(p, LET_TOK)) {
         char *arg = smprintf(p->token->value);
         eat(p, ID_TOK);
         eat(p, EQUALS_TOK);
         Term *def = parse_term(p);
         eat(p, IN_TOK);
+
+        Term *abs = abst(arg, NULL);
+        p->env = env_push(arg, &(abs->tc.abs), p->env);
         Term *body = parse_term(p);
-        return app(abst(arg, body), def);
+        p->env = env_pop(p->env);
+        abs->tc.abs.body = body;
+
+        return app(abs, def); // TODO: investigate binding at compile time
     } else {
         return parse_app(p);
     }

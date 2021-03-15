@@ -1,1 +1,1 @@
-let x = x in x
+\ x.x z (\y.x y)

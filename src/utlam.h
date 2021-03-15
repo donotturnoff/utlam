@@ -13,14 +13,16 @@ typedef enum term_type {
 } TermType;
 
 struct term;
-struct env;
+struct abs;
 
 typedef struct var {
     char *name;
+	struct abs *binder;
 } Var;
 
 typedef struct abs {
     char *arg;
+	struct term *bound;
     struct term *body;
 } Abs;
 
@@ -39,12 +41,6 @@ typedef struct term {
     TermChoice tc;
 } Term;
 
-typedef struct env {
-    char *name;
-    Term *t;
-    struct env *next;
-} Env;
-
 typedef enum token_type {
     EOF_TOK, LAMBDA_TOK, POINT_TOK, EQUALS_TOK,
     SEMICOLON_TOK, LPAREN_TOK, RPAREN_TOK, NAMESPACE_TOK,
@@ -56,11 +52,12 @@ typedef struct token {
     char *value;
 } Token;
 
-Term *var(char *name);
+Term *var(char *name, Abs *binder);
 Term *abst(char *arg, Term *body);
 Term *app(Term *t1, Term *t2);
 void free_term(Term *t);
-Term *eval(Term *t, Env *env);
+Term *eval(Term *t);
+void bind(Abs *abs, Term *t);
 char *term_to_string(Term *t);
 
 Token *next_token(char **src);
