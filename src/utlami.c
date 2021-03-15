@@ -9,14 +9,7 @@ int main(int argc, char *argv[]) {
     }
     char *src = argv[1];
 
-    Parser *p = parser(src);
-    Term *t = parse(p);
-
-    if (!t) {
-        fprintf(stderr, "%s\n", p->error);
-        free_parser(p);
-        return 1;
-    }
+    Term *t = parse(src);
 
     char *t_str = term_to_string(t);
     printf("%s -->> ", t_str);
@@ -31,7 +24,6 @@ int main(int argc, char *argv[]) {
     }
 
     free_term(t);
-    free_parser(p);
 
     return 0;
 }

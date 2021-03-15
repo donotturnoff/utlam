@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <assert.h>
 
+typedef enum error_type {
+	LEX_ERR, PARSE_ERR, EVAL_ERR
+} ErrorType;
+
 typedef enum term_type {
     VAR, ABS, APP
 } TermType;
@@ -41,10 +45,6 @@ typedef struct env {
     struct env *next;
 } Env;
 
-typedef struct lexer {
-    char *src;
-} Lexer;
-
 typedef enum token_type {
     EOF_TOK, LAMBDA_TOK, POINT_TOK, EQUALS_TOK,
     SEMICOLON_TOK, LPAREN_TOK, RPAREN_TOK, NAMESPACE_TOK,
@@ -56,12 +56,6 @@ typedef struct token {
     char *value;
 } Token;
 
-typedef struct parser {
-    Lexer *l;
-    char *error;
-    Token *token;
-} Parser;
-
 Term *var(char *name);
 Term *abst(char *arg, Term *body);
 Term *app(Term *t1, Term *t2);
@@ -69,14 +63,13 @@ void free_term(Term *t);
 Term *eval(Term *t, Env *env);
 char *term_to_string(Term *t);
 
-Lexer *lexer(char *src);
-Token *next_token(Lexer *l);
+Token *next_token(char **src);
 void free_token(Token *t);
 char *token_to_string(Token *t);
+char *token_type_to_string(TokenType type);
 
-Parser *parser(char *src);
-void free_parser(Parser *p);
-Term *parse(Parser *p);
+Term *parse(char *src);
 
 void *malloc_or_die(size_t size);
 char *smprintf(char *fmt, ...);
+void error(ErrorType type, const char *format, ...);

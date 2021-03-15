@@ -3,12 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Lexer *lexer(char *src) {
-    Lexer *l = malloc_or_die(sizeof(Lexer));
-    l->src = src;
-    return l;
-}
-
 int is_id_char(char c) {
     return ('A' <= c && c <= 'z') || ('0' <= c && c <= '9') || c == '_';
 }
@@ -31,42 +25,43 @@ void free_token(Token *t) {
     }
 }
 
-void consume_whitespace(Lexer *l) {
-    while (l->src[0] != '\0' && is_whitespace(l->src[0])) {
-        l->src++;
+void consume_whitespace(char **src) {
+    char c = (*src)[0];
+    while (c != '\0' && is_whitespace(c)) {
+        c = (++(*src))[0];
     }
 }
 
-Token *consume_id(Lexer *l) {
-    char *src = l->src;
+Token *consume_id(char **src) {
+    char *str = *src;
     size_t i = 0;
 
-    while (is_id_char(src[i])) {
+    while (is_id_char(str[i])) {
         i++;
     }
 
     Token *t;
-    if (i == 2 && strncmp(src, "in", 2) == 0) {
+    if (i == 2 && strncmp(str, "in", 2) == 0) {
         t = token(IN_TOK, NULL);
-    } else if (i == 3 && strncmp(src, "let", 3) == 0) {
+    } else if (i == 3 && strncmp(str, "let", 3) == 0) {
         t = token(LET_TOK, NULL);
-    } else if (i == 6 && strncmp(src, "export", 6) == 0) {
+    } else if (i == 6 && strncmp(str, "export", 6) == 0) {
         t = token(EXPORT_TOK, NULL);
     } else {
-        char *str = malloc_or_die((i + 1) * sizeof(char));
-        memcpy(str, src, i);
-        str[i] = '\0';
-        t = token(ID_TOK, str);
+        char *id = malloc_or_die((i + 1) * sizeof(char));
+        memcpy(id, str, i);
+        id[i] = '\0';
+        t = token(ID_TOK, id);
     }
 
-    l->src += i-1;
+    (*src) += i-1;
     return t;
 }
 
-Token *next_token(Lexer *l) {
-    consume_whitespace(l);
-    char c = l->src[0];
-    Token *t;
+Token *next_token(char **src) {
+    consume_whitespace(src);
+    char c = (*src)[0];
+    Token *t = NULL;
     if (c == '.') {
         t = token(POINT_TOK, NULL);
     } else if (c == '\\') {
@@ -80,27 +75,25 @@ Token *next_token(Lexer *l) {
     } else if (c == ')') {
         t = token(RPAREN_TOK, NULL);
     } else if (c == ':') {
-        if ((++(l->src))[0] == ':') {
+        if ((++(*src))[0] == ':') {
             t = token(NAMESPACE_TOK, NULL);
-        } else {
-            t = NULL;
         }
     } else if (c == '\0') {
         t = token(EOF_TOK, NULL);
     } else if (is_id_char(c)) {
-        t = consume_id(l);
-    } else {
-        t = NULL;
+        t = consume_id(src);
     }
 
     if (t) {
-        l->src++;
+        (*src)++;
+    } else {
+        error(LEX_ERR, "unexpected character %c", c);
     }
 
     return t;
 }
 
-char *token_strings[11] = {"EOF", "\\", ".", "=", ";", "(", ")", "::", "export", "let", "in"};
+char *token_strings[12] = {"EOF", "\\", ".", "=", ";", "(", ")", "::", "export", "let", "in", "identifier"};
 
 char *token_to_string(Token *t) {
     if (!t) {
@@ -110,6 +103,14 @@ char *token_to_string(Token *t) {
     if (type == ID_TOK) {
         return smprintf(t->value);
     } else if (EOF_TOK <= type && type <= IN_TOK) {
+        return smprintf(token_strings[type]);
+    } else {
+        return NULL;
+    }
+}
+
+char *token_type_to_string(TokenType type) {
+    if (EOF_TOK <= type && type <= ID_TOK) {
         return smprintf(token_strings[type]);
     } else {
         return NULL;

@@ -32,7 +32,7 @@ Term *eval_app(Term *t1, Term *t2, Env *env) {
         return NULL;
     }
     if (v1->type != ABS) {
-        fprintf(stderr, "Can only apply abstractions\n");
+        error(EVAL_ERR, "Can only apply abstractions");
         return NULL;
     }
     Term *v2 = eval(t2, env);
@@ -62,7 +62,7 @@ Term *eval(Term *t, Env *env) {
             break;
         default:
             result = NULL;
-            fprintf(stderr, "Unknown term type\n");
+            error(EVAL_ERR, "Unknown term type");
     }
     return result;
 }
