@@ -1,1 +1,1 @@
-\ x.x z (\y.x y)
+(\x.\y.\z.x y z) (\x.\y.x) z y
