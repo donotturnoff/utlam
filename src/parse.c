@@ -2,16 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: consistent naming between envs and exports
+
 typedef struct env {
     char *name;
     Abs *abs;
     struct env *next;
-} Env;
+} Env; // TODO: use hash table or something instead
+
+typedef struct exports {
+    char *ns, *name;
+    Term *t;
+    struct exports *next;
+} Exports; // TODO: use hash table
 
 typedef struct parser {
     char *src;
     Token *token;
     Env *env;
+    Exports *exps;
 } Parser;
 
 void parse_export(Parser *p);
@@ -41,17 +50,49 @@ Abs *env_get(char *name, Env *env) {
     return NULL;
 }
 
+Term *get_export(char *ns, char *name, Exports *exps) {
+    while (exps) {
+        if (strcmp(ns, exps->ns) == 0 && strcmp(name, exps->name) == 0) {
+            return exps->t;
+        }
+        exps = exps->next;
+    }
+    return NULL;
+}
+
+Exports *add_export(char *ns, char *name, Term *t, Exports *exps) {
+    if (get_export(ns, name, exps)) {
+        error(EVAL_ERR, "multiply-defined export %s::%s", ns, name);
+    }
+    Exports *new_head = malloc_or_die(sizeof(Exports));
+    new_head->ns = ns;
+    new_head->name = name;
+    new_head->t = t;
+    new_head->next = exps;
+    return new_head;
+}
+
+void free_exports(Exports *exps) {
+    while (exps) {
+        Exports *next = exps->next;
+        free(exps);
+        exps = next;
+    }
+}
+
 Parser *parser(char *src) {
     Parser *p = malloc_or_die(sizeof(Parser));
     p->src = src;
     p->token = NULL;
     p->env = NULL;
+    p->exps = NULL;
     return p;
 }
 
 void free_parser(Parser *p) {
     if (p) {
         free_token(p->token);
+        free_exports(p->exps);
         free(p);
     }
 }
@@ -79,14 +120,20 @@ void eat(Parser *p, TokenType type) {
 
 Term *parse_atom(Parser *p) {
     Term *t = NULL;
-    char *name = smprintf(p->token->value);
     if (accept(p, LPAREN_TOK)) {
         t = parse_term(p);
         eat(p, RPAREN_TOK);
     } else {
+        char *ns = smprintf(p->token->value);
         eat(p, ID_TOK);
-        Abs *binder = env_get(name, p->env);
-        t = var(name, binder);
+        if (accept(p, NAMESPACE_TOK)) {
+            char *name = smprintf(p->token->value);
+            eat(p, ID_TOK);
+            t = get_export(ns, name, p->exps);
+        } else {
+            Abs *binder = env_get(ns, p->env); // ns is actually name here, not namespace
+            t = var(ns, binder);
+        }
     }
     return t;
 }
@@ -132,7 +179,15 @@ Term *parse_term(Parser *p) {
 }
 
 void parse_export(Parser *p) {
-
+    char *ns = smprintf(p->token->value);
+    eat(p, ID_TOK);
+    eat(p, NAMESPACE_TOK);
+    char *name = smprintf(p->token->value);
+    eat(p, ID_TOK);
+    eat(p, EQUALS_TOK);
+    Term *t = parse_term(p);
+    eat(p, SEMICOLON_TOK);
+    p->exps = add_export(ns, name, t, p->exps);
 }
 
 Term *parse_seq(Parser *p) {
