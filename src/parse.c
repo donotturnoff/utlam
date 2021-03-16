@@ -65,10 +65,8 @@ int accept(Parser *p, TokenType type) {
     return 0;
 }
 
-int eat(Parser *p, TokenType type) {
-    if (accept(p, type)) {
-        return 1;
-    } else {
+void eat(Parser *p, TokenType type) {
+    if (!accept(p, type)) {
         char *expected_str = token_type_to_string(type);
         char *token_str = token_to_string(p->token);
         char *msg = smprintf("expected %s, got %s", expected_str, token_str);
@@ -76,7 +74,6 @@ int eat(Parser *p, TokenType type) {
         free(expected_str);
         free_parser(p);
         error(PARSE_ERR, msg);
-        return 0;
     }
 }
 
@@ -111,7 +108,6 @@ Term *parse_term(Parser *p) {
         eat(p, POINT_TOK);
         Term *abs = abst(arg, NULL);
         p->env = env_push(arg, &(abs->tc.abs), p->env);
-        assert(p->env != NULL);
         Term *body = parse_term(p);
         p->env = env_pop(p->env);
         abs->tc.abs.body = body;

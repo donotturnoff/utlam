@@ -1,9 +1,5 @@
 #include <stddef.h>
 
-// To remove later
-#include <stdio.h>
-#include <assert.h>
-
 typedef enum error_type {
 	LEX_ERR, PARSE_ERR, EVAL_ERR, FILE_ERR
 } ErrorType;
@@ -12,22 +8,21 @@ typedef enum term_type {
     VAR, ABS, APP
 } TermType;
 
-struct term;
-struct abs;
-
-typedef struct var {
-    char *name;
-	struct abs *binder;
-} Var;
+typedef struct term Term;
 
 typedef struct abs {
     char *arg;
-	struct term *bound;
-    struct term *body;
+	Term *bound;
+    Term *body;
 } Abs;
 
+typedef struct var {
+    char *name;
+	Abs *binder;
+} Var;
+
 typedef struct app {
-    struct term *t1, *t2;
+    Term *t1, *t2;
 } App;
 
 typedef union term_choice {
