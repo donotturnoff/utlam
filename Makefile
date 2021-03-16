@@ -2,7 +2,7 @@
 .SUFFIXES: .c .o
 
 CC=gcc
-C=-Wall --pedantic -std=c99 -fsanitize=address
+CFLAGS=-Wall --pedantic -std=c99 -fsanitize=address
 LDLIBS=
 OBJDIR=obj
 vpath %.c src

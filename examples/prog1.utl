@@ -2,4 +2,4 @@ export Bool::true = \x.\y.x;
 export Bool::false = \x.\y.y;
 export Base::id = \x.x;
 
-Bool::true Base::id Bool::true
+Bool::true Base::id Bool::false
