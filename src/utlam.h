@@ -8,21 +8,21 @@ typedef enum term_type {
     VAR, ABS, APP
 } TermType;
 
-struct term;
+typedef struct term Term;
 
 typedef struct abs {
     char *arg;
-	struct term *bound;
-    struct term *body;
+	Term *bound;
+    Term *body;
 } Abs;
 
 typedef struct var {
+    char *name;
 	Abs *binder;
-    struct term **export;
 } Var;
 
 typedef struct app {
-    struct term *t1, *t2;
+    Term *t1, *t2;
 } App;
 
 typedef union term_choice {
@@ -34,8 +34,6 @@ typedef union term_choice {
 typedef struct term {
     TermType type;
     TermChoice tc;
-    char *ns;
-    char *name;
 } Term;
 
 typedef enum token_type {
@@ -49,7 +47,7 @@ typedef struct token {
     char *value;
 } Token;
 
-Term *var(char *ns, char *name, Abs *binder, Term **export);
+Term *var(char *name, Abs *binder);
 Term *abst(char *arg, Term *body);
 Term *app(Term *t1, Term *t2);
 void free_term(Term *t);

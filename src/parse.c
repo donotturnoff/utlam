@@ -2,25 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-// TODO: consistent naming between envs and exports
-
 typedef struct env {
     char *name;
     Abs *abs;
     struct env *next;
-} Env; // TODO: use hash table or something instead
-
-typedef struct exports {
-    char *ns, *name;
-    Term **t;
-    struct exports *next;
-} Exports; // TODO: use hash table
+} Env;
 
 typedef struct parser {
     char *src;
     Token *token;
     Env *env;
-    Exports *exps;
 } Parser;
 
 void parse_export(Parser *p);
@@ -50,60 +41,17 @@ Abs *env_get(char *name, Env *env) {
     return NULL;
 }
 
-Term **get_export(char *ns, char *name, Exports *exps) {
-    while (exps) {
-        if (strcmp(ns, exps->ns) == 0 && strcmp(name, exps->name) == 0) {
-            return exps->t;
-        }
-        exps = exps->next;
-    }
-    return NULL;
-}
-
-Exports *add_export(char *ns, char *name, Term *t, Exports *exps) {
-    Exports *cur = exps;
-    while (cur) {
-        if (strcmp(cur->ns, ns) == 0 && strcmp(cur->name, name) == 0) {
-            if (*(cur->t)) { // Export already defind
-                error(EVAL_ERR, "multiply-defined export %s::%s", ns, name);
-            } else { // Export provisionally declared by its use, now fill it in
-                *(cur->t) = t;
-                return exps;
-            }
-        }
-        cur = cur->next;
-    }
-    // Export not defined nor provisionally declared by use: create new export
-    Exports *new_head = malloc_or_die(sizeof(Exports));
-    new_head->ns = ns;
-    new_head->name = name;
-    new_head->t = malloc_or_die(sizeof(Term *));
-    *(new_head->t) = t;
-    new_head->next = exps;
-    return new_head;
-}
-
-void free_exports(Exports *exps) {
-    while (exps) {
-        Exports *next = exps->next;
-        free(exps);
-        exps = next;
-    }
-}
-
 Parser *parser(char *src) {
     Parser *p = malloc_or_die(sizeof(Parser));
     p->src = src;
     p->token = NULL;
     p->env = NULL;
-    p->exps = NULL;
     return p;
 }
 
 void free_parser(Parser *p) {
     if (p) {
         free_token(p->token);
-        free_exports(p->exps);
         free(p);
     }
 }
@@ -131,31 +79,14 @@ void eat(Parser *p, TokenType type) {
 
 Term *parse_atom(Parser *p) {
     Term *t = NULL;
+    char *name = smprintf(p->token->value);
     if (accept(p, LPAREN_TOK)) {
         t = parse_term(p);
         eat(p, RPAREN_TOK);
     } else {
-        char *ns = smprintf(p->token->value);
         eat(p, ID_TOK);
-        if (accept(p, NAMESPACE_TOK)) {
-            char *name = smprintf(p->token->value);
-            eat(p, ID_TOK);
-            Term **export = get_export(ns, name, p->exps);
-            if (!export) {
-                // Provisionally add export to be filled in by definition later on
-                p->exps = add_export(ns, name, NULL, p->exps);
-                t = var(ns, name, NULL, p->exps->t);
-            } else {
-                t = var(ns, name, NULL, export);
-            }
-        } else {
-            Abs *binder = env_get(ns, p->env); // ns is actually name here, not namespace
-            if (binder) {
-                t = var(NULL, NULL, binder, NULL);
-            } else {
-                t = var(NULL, ns, NULL, NULL);
-            }
-        }
+        Abs *binder = env_get(name, p->env);
+        t = var(name, binder);
     }
     return t;
 }
@@ -201,25 +132,7 @@ Term *parse_term(Parser *p) {
 }
 
 void parse_export(Parser *p) {
-    char *ns = smprintf(p->token->value);
-    eat(p, ID_TOK);
-    eat(p, NAMESPACE_TOK);
-    char *name = smprintf(p->token->value);
-    eat(p, ID_TOK);
-    eat(p, EQUALS_TOK);
-    Term *t = parse_term(p);
-    t->ns = ns;
-    t->name = name;
-    eat(p, SEMICOLON_TOK);
-    Term **export = get_export(ns, name, p->exps);
-    if (export) {
-        if (*export) { // Exported term already defined: error
-        } else { // Exported term provisionally added by its use: needs filling in
-            *export = t;
-        }
-    } else {
-        p->exps = add_export(ns, name, t, p->exps);
-    }
+
 }
 
 Term *parse_seq(Parser *p) {
