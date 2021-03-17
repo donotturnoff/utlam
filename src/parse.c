@@ -12,7 +12,7 @@ typedef struct env {
 
 typedef struct exports {
     char *ns, *name;
-    Term *t;
+    Term **t;
     struct exports *next;
 } Exports; // TODO: use hash table
 
@@ -50,7 +50,7 @@ Abs *env_get(char *name, Env *env) {
     return NULL;
 }
 
-Term *get_export(char *ns, char *name, Exports *exps) {
+Term **get_export(char *ns, char *name, Exports *exps) {
     while (exps) {
         if (strcmp(ns, exps->ns) == 0 && strcmp(name, exps->name) == 0) {
             return exps->t;
@@ -61,13 +61,24 @@ Term *get_export(char *ns, char *name, Exports *exps) {
 }
 
 Exports *add_export(char *ns, char *name, Term *t, Exports *exps) {
-    if (get_export(ns, name, exps)) {
-        error(EVAL_ERR, "multiply-defined export %s::%s", ns, name);
+    Exports *cur = exps;
+    while (cur) {
+        if (strcmp(cur->ns, ns) == 0 && strcmp(cur->name, name) == 0) {
+            if (*(cur->t)) { // Export already defind
+                error(EVAL_ERR, "multiply-defined export %s::%s", ns, name);
+            } else { // Export provisionally declared by its use, now fill it in
+                *(cur->t) = t;
+                return exps;
+            }
+        }
+        cur = cur->next;
     }
+    // Export not defined nor provisionally declared by use: create new export
     Exports *new_head = malloc_or_die(sizeof(Exports));
     new_head->ns = ns;
     new_head->name = name;
-    new_head->t = t;
+    new_head->t = malloc_or_die(sizeof(Term *));
+    *(new_head->t) = t;
     new_head->next = exps;
     return new_head;
 }
@@ -129,10 +140,21 @@ Term *parse_atom(Parser *p) {
         if (accept(p, NAMESPACE_TOK)) {
             char *name = smprintf(p->token->value);
             eat(p, ID_TOK);
-            t = get_export(ns, name, p->exps);
+            Term **export = get_export(ns, name, p->exps);
+            if (!export) {
+                // Provisionally add export to be filled in by definition later on
+                p->exps = add_export(ns, name, NULL, p->exps);
+                t = var(ns, name, NULL, p->exps->t);
+            } else {
+                t = var(ns, name, NULL, export);
+            }
         } else {
             Abs *binder = env_get(ns, p->env); // ns is actually name here, not namespace
-            t = var(ns, binder);
+            if (binder) {
+                t = var(NULL, NULL, binder, NULL);
+            } else {
+                t = var(NULL, ns, NULL, NULL);
+            }
         }
     }
     return t;
@@ -186,8 +208,18 @@ void parse_export(Parser *p) {
     eat(p, ID_TOK);
     eat(p, EQUALS_TOK);
     Term *t = parse_term(p);
+    t->ns = ns;
+    t->name = name;
     eat(p, SEMICOLON_TOK);
-    p->exps = add_export(ns, name, t, p->exps);
+    Term **export = get_export(ns, name, p->exps);
+    if (export) {
+        if (*export) { // Exported term already defined: error
+        } else { // Exported term provisionally added by its use: needs filling in
+            *export = t;
+        }
+    } else {
+        p->exps = add_export(ns, name, t, p->exps);
+    }
 }
 
 Term *parse_seq(Parser *p) {
