@@ -3,21 +3,17 @@
 #include <stdio.h>
 #include <string.h>
 
-Term *var(char *ns, char *name, Abs *binder, Term **export) {
+Term *var(char *name, Abs *binder) {
     Term *t = malloc_or_die(sizeof(Term));
     t->type = VAR;
-    t->ns = ns;
-    t->name = name;
+    t->tc.var.name = name;
     t->tc.var.binder = binder;
-    t->tc.var.export = export;
     return t;
 }
 
 Term *abst(char *arg, Term *body) {
     Term *t = malloc_or_die(sizeof(Term));
     t->type = ABS;
-    t->ns = NULL;
-    t->name = NULL;
     t->tc.abs.arg = arg;
     t->tc.abs.bound = NULL;
     t->tc.abs.body = body;
@@ -27,8 +23,6 @@ Term *abst(char *arg, Term *body) {
 Term *app(Term *t1, Term *t2) {
     Term *t = malloc_or_die(sizeof(Term));
     t->type = APP;
-    t->ns = NULL;
-    t->name = NULL;
     t->tc.app.t1 = t1;
     t->tc.app.t2 = t2;
     return t;
@@ -38,11 +32,9 @@ void free_term(Term *t) {
     if (t) {
         TermType type = t->type;
         TermChoice tc = t->tc;
-        free(t->ns);
-        free(t->name);
         switch (type) {
             case VAR:
-                free(tc.var.export);
+                free(tc.var.name);
                 free(t);
                 break;
             case ABS:
@@ -63,13 +55,10 @@ void free_term(Term *t) {
 
 char *term_to_string(Term *t) {
     if (!t) return NULL;
-    if (t->ns && t->name) {
-        return smprintf("%s::%s", t->ns, t->name);
-    }
     TermType type = t->type;
     TermChoice tc = t->tc;
     if (type == VAR) {
-        return (tc.var.binder && tc.var.binder->bound) ? term_to_string(tc.var.binder->bound) : smprintf(t->name);
+        return (tc.var.binder && tc.var.binder->bound) ? term_to_string(tc.var.binder->bound) : smprintf(tc.var.name);
     } else if (type == ABS) {
         char *body_str = term_to_string(tc.abs.body);
         char *str = smprintf("(\\%s.%s)", tc.abs.arg, body_str);

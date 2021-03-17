@@ -1,6 +1,1 @@
-export Bool::true = \x.\y.x;
-export Bool::false = \x.\y.y;
-
-Bool::true (\x.y) Base::id
-
-export Base::id = \x.x;
+(\x.\y.\z.x y z) (\x.\y.x) z y
