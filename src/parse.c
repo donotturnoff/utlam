@@ -86,7 +86,7 @@ Term *parse_atom(Parser *p) {
     } else {
         eat(p, ID_TOK);
         Abs *binder = env_get(name, p->env);
-        t = var(name, binder);
+        t = var(NULL, name, binder);
     }
     return t;
 }
