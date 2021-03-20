@@ -53,17 +53,16 @@ void free_term(Term *t) {
 char *term_to_string(Term *t) {
     char *ns = t->ns;
     char *name = t->name;
-    if (name) {
+    TermType type = t->type;
+    TermChoice tc = t->tc;
+    if (type == VAR && tc.var.binder && tc.var.binder->bound) {
+        return term_to_string(tc.var.binder->bound);
+    } else if (name) {
         if (ns) {
             return smprintf("%s::%s", ns, name);
         } else {
             return smprintf("%s", name);
         }
-    }
-    TermType type = t->type;
-    TermChoice tc = t->tc;
-    if (type == VAR) {
-        return term_to_string(tc.var.binder->bound);
     } else if (type == ABS) {
         char *body_str = term_to_string(tc.abs.body);
         char *str = smprintf("(\\%s.%s)", tc.abs.arg, body_str);
