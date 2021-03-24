@@ -1,1 +1,1 @@
-let f = \x.x x in f (\x.x)
+(\n.\f.f y)

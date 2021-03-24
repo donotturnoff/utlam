@@ -1,0 +1,13 @@
+- Fix memory leaks
+- Make sure variable names are unique at the end
+- Namespaces
+- Exports
+- Make function names more consistent
+- Better lexing and parsing errors
+  - Column, line, file
+  - Full list of expected tokens
+- Integers
+- Compilation
+- Tail-call optimisation
+- Improve performance
+  - Hash tables instead of linked lists

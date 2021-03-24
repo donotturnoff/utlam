@@ -12,12 +12,13 @@ struct term;
 
 typedef struct abs {
     char *arg;
-	struct term *bound;
     struct term *body;
+	struct term *vars;
 } Abs;
 
 typedef struct var {
 	Abs *binder;
+    struct term *next;
 } Var;
 
 typedef struct app {
@@ -47,21 +48,30 @@ typedef struct token {
     char *value;
 } Token;
 
+typedef struct env {
+    char *name;
+    Abs *abs;
+    struct env *next;
+} Env;
+
 Term *var(char *ns, char *name, Abs *binder);
 Term *abst(char *arg, Term *body);
 Term *app(Term *t1, Term *t2);
 void free_term(Term *t);
+Term *copy_term(Term *t, Env *env);
 char *term_to_string(Term *t);
 
 Term *eval(Term *t);
-void bind(Abs *abs, Term *t);
 
 Token *next_token(char **src);
 void free_token(Token *t);
 char *token_to_string(Token *t);
 char *token_type_to_string(TokenType type);
-
 Term *parse(char *src);
+
+Env *env_push(char *name, Abs *abs, Env *env);
+Env *env_pop(Env *env);
+Abs *env_get(char *name, Env *env);
 
 void *malloc_or_die(size_t size);
 char *smprintf(char *fmt, ...);
