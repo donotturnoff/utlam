@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     printf("%s\n", result_str);
     free(result_str);
 
-    free_term(t);
+    free_term(result);
 
     return 0;
 }

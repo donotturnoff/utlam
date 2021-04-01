@@ -95,7 +95,7 @@ Term *parse_term(Parser *p) {
         p->env = env_pop(p->env);
         abs->tc.abs.body = body;
 
-        return app(abs, def); // TODO: investigate binding at compile time
+        return app(abs, def);
     } else {
         return parse_app(p);
     }
