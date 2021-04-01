@@ -20,27 +20,31 @@ void substitute(Term *t, Abs *in) {
 Term *reduce(Term *t, int *altered) {
     TermType type = t->type;
     TermChoice tc = t->tc;
+    Term *result;
     if (type == VAR) {
-        return t;
+        result = t;
     } else if (type == ABS) {
         t->tc.abs.body = reduce(tc.abs.body, altered);
-        return t;
+        result = t;
     } else {
-        if (tc.app.t1->type == ABS) { // Redex
-            substitute(tc.app.t2, &(tc.app.t1->tc.abs));
+        Term *t1 = tc.app.t1;
+        Term *t2 = tc.app.t2;
+        if (t1->type == ABS) { // Redex
+            Abs abs = t1->tc.abs;
+            substitute(t2, &abs);
             *altered = 1;
-            Term *result = tc.app.t1->tc.abs.body;
-            free(tc.app.t1->tc.abs.arg);
-            free(tc.app.t1);
-            free_term(tc.app.t2);
+            result = abs.body;
+            free(abs.arg);
+            free(t1);
+            free_term(t2);
             free(t);
-            return result;
         } else {
-            t->tc.app.t1 = reduce(tc.app.t1, altered);
-            t->tc.app.t2 = reduce(tc.app.t2, altered);
-            return t;
+            t->tc.app.t1 = reduce(t1, altered);
+            t->tc.app.t2 = reduce(t2, altered);
+            result = t;
         }
     }
+    return result;
 }
 
 Term *eval(Term *t) {

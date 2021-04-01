@@ -1,37 +1,60 @@
 #include "utlam.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <getopt.h>
+
+void print_usage(char *prog) {
+    fprintf(stderr, "Usage: %s [-d] file\n", prog);
+    exit(EXIT_FAILURE);
+}
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s [input file]\n", argv[0]);
-        return 1;
+    int debug = 0;
+
+    char opt;
+    while ((opt = getopt(argc, argv, "d")) != -1) {
+        switch (opt) {
+            case 'd':
+                debug = 1;
+                break;
+            default:
+                print_usage(argv[0]);
+        }
+    }
+    if (optind == argc) { // No file supplied
+        print_usage(argv[0]);
     }
 
-    FILE *f = fopen(argv[1], "rb");
+    FILE *f = fopen(argv[optind], "rb");
     if (!f) {
         error(FILE_ERR, "failed to open %s", argv[1]);
     }
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);  /* same as rewind(f); */
+    rewind(f);
 
     char *src = malloc((fsize + 1) * sizeof(char));
     fread(src, 1, fsize, f);
     fclose(f);
-
     src[fsize] = '\0';
+    if (debug) {
+        printf("Source:\n%s\n", src);
+    }
 
     Term *t = parse(src);
     free(src);
 
-    char *t_str = term_to_string(t);
-    printf("%s -->> ", t_str);
-    fflush(stdout);
-    free(t_str);
+    if (debug) {
+        char *t_str = term_to_string(t);
+        printf("\nParsed:\n%s\n", t_str);
+        free(t_str);
+    }
 
     Term *result = eval(t);
     char *result_str = term_to_string(result);
+    if (debug) {
+        printf("\nResult:\n");
+    }
     printf("%s\n", result_str);
     free(result_str);
 

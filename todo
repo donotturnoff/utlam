@@ -1,4 +1,3 @@
-- Fix memory leaks
 - Make sure variable names are unique at the end
 - Namespaces
 - Exports
