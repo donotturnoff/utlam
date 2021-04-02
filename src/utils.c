@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 void *malloc_or_die(size_t size) {
     void *mem = malloc(size);
@@ -20,7 +21,7 @@ char *smprintf(char *fmt, ...) {
     va_list fmtargs;
 
     va_start(fmtargs, fmt);
-    int len = vsnprintf(NULL, 0, fmt, fmtargs);
+    uint32_t len = vsnprintf(NULL, 0, fmt, fmtargs);
     va_end(fmtargs);
 
     char *ret = malloc_or_die(++len);

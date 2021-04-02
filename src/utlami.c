@@ -1,6 +1,8 @@
 #include "utlam.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <getopt.h>
 
 void print_usage(char *prog) {
@@ -9,7 +11,7 @@ void print_usage(char *prog) {
 }
 
 int main(int argc, char *argv[]) {
-    int debug = 0;
+    bool debug = 0;
 
     char opt;
     while ((opt = getopt(argc, argv, "d")) != -1) {
@@ -30,7 +32,7 @@ int main(int argc, char *argv[]) {
         error(FILE_ERR, "failed to open %s", argv[1]);
     }
     fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
+    uint64_t fsize = ftell(f);
     rewind(f);
 
     char *src = malloc((fsize + 1) * sizeof(char));

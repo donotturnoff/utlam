@@ -1,7 +1,7 @@
 #include "utlam.h"
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 int is_id_char(char c) {
     return ('A' <= c && c <= 'z') || ('0' <= c && c <= '9') || c == '_';
@@ -34,7 +34,7 @@ void consume_whitespace(char **src) {
 
 Token *consume_id(char **src) {
     char *str = *src;
-    size_t i = 0;
+    uint32_t i = 0;
 
     while (is_id_char(str[i])) {
         i++;

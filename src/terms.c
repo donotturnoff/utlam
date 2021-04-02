@@ -1,7 +1,5 @@
 #include "utlam.h"
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
 Term *var(char *ns, char *name, Abs *binder) {
     Term *t = malloc_or_die(sizeof(Term));

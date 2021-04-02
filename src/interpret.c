@@ -1,5 +1,6 @@
 #include "utlam.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 void substitute(Term *t, Abs *in) {
     Term *v = in->vars;
@@ -17,7 +18,7 @@ void substitute(Term *t, Abs *in) {
     }
 }
 
-Term *reduce(Term *t, int *altered) {
+Term *reduce(Term *t, bool *altered) {
     TermType type = t->type;
     TermChoice tc = t->tc;
     Term *result;
@@ -48,7 +49,7 @@ Term *reduce(Term *t, int *altered) {
 }
 
 Term *eval(Term *t) {
-    int altered;
+    bool altered;
     do {
         altered = 0;
         t = reduce(t, &altered);
